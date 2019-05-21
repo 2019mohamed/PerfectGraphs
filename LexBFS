@@ -1,0 +1,215 @@
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map.Entry;
+
+import javax.swing.plaf.basic.BasicScrollPaneUI.HSBChangeListener;
+
+import java.util.Scanner;
+
+public class LexBFS {
+
+	private static ArrayList<Integer> adj[];
+	private static HashSet<Integer> adj_[];
+	private static int N, M;
+	private static Scanner in = new Scanner(System.in);
+	private static HashMap<Integer, Integer> order, order_1;
+	private static ArrayList<Integer> label[];
+	private static boolean vis[];
+
+	// public static void main(String[] args) {
+	// TODO Auto-gene1rated method stub
+	public LexBFS(int n, int m) {
+		N = n + 1;
+		M = m;
+		adj = new ArrayList[N];
+		for (int i = 0; i < adj.length; i++) {
+			adj[i] = new ArrayList<>();
+		}
+		System.out.println("Enter Graph : ");
+		for (int i = 0; i < M; i++) {
+			System.out.println("Enter " + (i + 1) + " Edge");
+			int u = in.nextInt();
+			int v = in.nextInt();
+			adj[u].add(v);
+			adj[v].add(u);
+		}
+		order = new HashMap<>();
+		order_1 = new HashMap<>();
+		label = new ArrayList[N];
+		for (int i = 0; i < adj.length; i++) {
+			label[i] = new ArrayList<>();
+		}
+		vis = new boolean[N];
+		adj_ = new HashSet[N];
+		for (int i = 0; i <= n; i++) {
+			adj_[i] = new HashSet<>();
+			adj_[i].addAll(adj[i]);
+		}
+		LexBfs();
+
+		if (IsPerfect()) {
+			System.out.println("A graph is chordal :)");
+		} else {
+			System.out.println("A graph is not chordal ! ");
+			 System.exit(0);
+		}
+
+	}
+
+	private static boolean IsPerfect() {
+		HashSet<Integer> A[] = new HashSet[N];// 4------5
+		for (int i = 0; i < A.length; i++) {
+			A[i] = new HashSet<>();
+		}
+		for (int i = 1; i < N - 1; i++) {
+			int v = order.get(i);
+			HashSet<Integer> X = get(v, N);
+
+			HashSet<Integer> temp = A[v];
+			temp.removeAll(adj[v]);
+			if (X.size() == 0) {
+
+				if (temp.size() != 0) {
+					return false;
+				}
+			}
+			int u = order.get(Min(X));
+			A[u].addAll(X);
+			A[u].remove(u);
+
+			if (temp.size() != 0) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static int Min(HashSet<Integer> X) {
+
+		int i = Integer.MAX_VALUE;
+		for (Integer x : X) {
+			i = Math.min(i, order_1.get(x));
+		}
+		return i;
+	}
+
+	private static HashSet<Integer> get(int v, int N) {
+		HashSet<Integer> X = new HashSet<>();
+		for (int x = 1; x < N; x++) {
+			if (adj[v].contains(x) && order_1.get(v) < order_1.get(x)) {
+				X.add(x);
+			}
+		}
+
+		return X;
+	}
+
+	public static ArrayList<Integer>[] getAdj() {
+		return adj;
+	}
+
+	public static void setAdj(ArrayList<Integer>[] adj) {
+		LexBFS.adj = adj;
+	}
+
+	public static int getN() {
+		return N;
+	}
+
+	public static void setN(int n) {
+		N = n;
+	}
+
+	public static int getM() {
+		return M;
+	}
+
+	public static void setM(int m) {
+		M = m;
+	}
+
+	public static Scanner getIn() {
+		return in;
+	}
+
+	public static void setIn(Scanner in) {
+		LexBFS.in = in;
+	}
+
+	public static HashMap<Integer, Integer> getOrder() {
+		return order;
+	}
+
+	public static void setOrder(HashMap<Integer, Integer> order) {
+		LexBFS.order = order;
+	}
+
+	public static HashMap<Integer, Integer> getOrder_1() {
+		return order_1;
+	}
+
+	public static void setOrder_1(HashMap<Integer, Integer> order_1) {
+		LexBFS.order_1 = order_1;
+	}
+
+	public static ArrayList<Integer>[] getLabel() {
+		return label;
+	}
+
+	public static void setLabel(ArrayList<Integer>[] label) {
+		LexBFS.label = label;
+	}
+
+	public static boolean[] getVis() {
+		return vis;
+	}
+
+	public static void setVis(boolean[] vis) {
+		LexBFS.vis = vis;
+	}
+
+	private static void LexBfs() {
+		label[1].add(N);
+		for (int i = N; i >= 1; i--) {
+			int v = pick();
+			if (v != -1) {
+				vis[v] = true;
+				order.put(i - 1, v);
+				order_1.put(v, i - 1);
+				update(v, i);
+			}
+		}
+	}
+
+	private static void update(int v, int i) {
+		for (Integer u : adj[v]) {
+			if (!vis[u]) {
+				label[u].add(i);
+			}
+		}
+	}
+
+	private static int pick() {
+		ArrayList<Integer> best = new ArrayList<>();
+		int v = -1;
+		for (int i = 1; i < N; i++) {
+			if (!vis[i]) {
+				if (label[i].size() > best.size()) {
+					best = label[i];
+					v = i;
+				} else if (best.size() == label[i].size() && best.size() > 0) {
+					for (int index = 0; index < best.size(); index++) {
+						if (label[i].get(index) >= best.get(index)) {
+							best = label[i];
+							v = i;
+							break;
+						}
+					}
+				}
+			}
+		}
+		return v;
+	}
+
+}
