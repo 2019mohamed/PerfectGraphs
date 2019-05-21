@@ -1,0 +1,221 @@
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Scanner;
+
+public class ALLMaximalCliquesOfChordalGraph {
+	private static Scanner in = new Scanner(System.in);
+	static HashMap<Integer, Integer> O, O_1;
+	static ArrayList<HashSet<Integer>> MaximalCliques, fact;
+	static int ChromaticNumber = -1;
+	static int S[];
+	static LexBFS lbfs;
+	static HashSet<Integer> adj[];
+
+	public static void main(String[] args) {
+		System.out.println("Enter number of verteces : ");
+		int n = in.nextInt();
+		System.out.println("Enter number of edges : ");
+		int m = in.nextInt();
+		lbfs = new LexBFS(n, m);
+		O = lbfs.getOrder();
+		System.out.println("POE is : " + O);
+		O_1 = lbfs.getOrder_1();
+		S = new int[n + 1];
+		adj = new HashSet[n + 1];
+		for (int i = 0; i <= n; i++) {
+			adj[i] = new HashSet<>();
+			adj[i].addAll(lbfs.getAdj()[i]);
+		}
+		MaximalCliques = new ArrayList<>();
+		/*
+		 * for(int i = 0 ; i<n ; i++){ MaximalCliques.add(new HashSet<>()); }
+		 */
+		Cliques(n);
+		System.out.println("All cliques no: " + MaximalCliques.size());
+		for (HashSet<Integer> hs : MaximalCliques) {
+			System.out.println(hs);
+		}
+		System.out.println("Chromatic number is : " + ChromaticNumber);
+		fact = new ArrayList<>(n);
+		for (int i = 0; i < MaximalCliques.size(); i++) {
+			for (int j = 0; j < MaximalCliques.size(); j++) {
+				if (i != j && MaximalCliques.get(i).size() != MaximalCliques.get(j).size()) {
+					HashSet<Integer> s1 = MaximalCliques.get(i);
+					HashSet<Integer> s2 = MaximalCliques.get(j);
+					boolean ok = true;
+					if (s1.size() > s2.size()) {
+						for (Integer s : s2) {
+							ok &= s1.contains(s);
+						}
+						if (ok) {
+							MaximalCliques.remove(j);
+						}
+					} else if (s2.size() > s1.size()) {
+						for (Integer s : s1) {
+							ok &= s2.contains(s);
+						}
+						if (ok) {
+							MaximalCliques.remove(i);
+						}
+					}
+
+				}
+			}
+		}
+
+		fact = MaximalCliques;
+		System.out.println("number of maximal cliques : " + fact.size());
+		System.out.println("Maximal cliques are : ");
+		for (HashSet<Integer> hs : fact) {
+			System.out.println(hs);
+		}
+		ArrayList<Edge> E = new ArrayList<>();
+
+		E.add(new Edge());
+		for (int i = 0; i < fact.size(); i++) {
+			for (int j = i + 1; j < fact.size(); j++) {
+				HashSet<Integer> s1 = fact.get(i);
+				HashSet<Integer> s2 = fact.get(j);
+				HashSet<Integer> intersection = new HashSet<>(s1);
+				intersection.retainAll(s2);
+				E.add(new Edge(i + 1, j + 1, -1 * intersection.size(), s1, s2));
+
+			}
+		}
+		Collections.sort(E);
+/*
+		for (Edge e : E) {
+			System.out.println(e);
+		}
+		*/
+		ArrayList<Edge> G[] = new ArrayList[fact.size() + 1];
+		for (int i = 0; i < G.length; i++) {
+			G[i] = new ArrayList<>();
+		}
+		DisjointSets DS = new DisjointSets(fact.size() + 1);
+		for (int i = 0; i < E.size(); i++) {
+			if (DS.find(E.get(i).to) != DS.find(E.get(i).from)) {
+				DS.union(E.get(i).to, E.get(i).from);
+				G[E.get(i).from].add(
+						new Edge(E.get(i).from, E.get(i).to, -1 * E.get(i).cost, E.get(i).clique1, E.get(i).clique2));
+				G[E.get(i).to].add(
+						new Edge(E.get(i).to, E.get(i).from, -1 * E.get(i).cost, E.get(i).clique1, E.get(i).clique2));
+			}
+		}
+		System.out.println("Clique tree is : ");
+		for (int i = 1; i < G.length; i++) {
+			System.out.println(G[i]);
+		}
+
+	}
+
+	static class Edge implements Comparable<Edge> {
+		int from, to, cost;
+
+		HashSet<Integer> clique1, clique2;
+
+		Edge() {
+
+		}
+
+		Edge(int f, int t, int c, HashSet<Integer> cl, HashSet<Integer> c2) {
+			this.from = f;
+			this.to = t;
+			this.cost = c;
+			this.clique1 = cl;
+			this.clique2 = c2;
+		}
+
+		@Override
+		public int compareTo(Edge o) {
+			return this.cost - o.cost;
+		}
+
+		@Override
+		public String toString() {
+			return "Edge [from=" + from + ", to=" + to + ", cost=" + cost + ", clique1=" + clique1 + ", clique2="
+					+ clique2 + "]";
+		}
+
+	}
+
+	static class DisjointSets {
+		int[] p, rank;
+
+		public DisjointSets(int n) {
+			p = new int[n];
+			rank = new int[n];
+			for (int i = 0; i < n; i++)
+				p[i] = i;
+		}
+
+		void union(int x, int y) {
+			int px = find(x);
+			int py = find(y);
+			if (rank[px] > rank[py])
+				p[py] = px;
+			else
+				p[px] = py;
+			if (rank[px] == rank[py])
+				rank[py] = rank[py] + 1;
+		}
+
+		int find(int x) {
+			if (x != p[x])
+				p[x] = find(p[x]);
+			return p[x];
+		}
+	}
+
+	private static void Cliques(int N) {
+		ChromaticNumber = 1;
+		HashSet<Integer> X = new HashSet<>();
+		for (int i = 1; i <= N; i++) {
+			int v = O.get(i);
+			X = get(v, N);
+			if (adj[v].isEmpty()) {
+				HashSet<Integer> c = new HashSet<>();
+				c.add(v);
+				// System.out.println(c);
+				MaximalCliques.add(c);
+			}
+			if (X.isEmpty()) {
+				break;
+			}
+			int u = O.get(Min(X));
+			S[u] = Math.max(S[u], X.size() - 1);
+			if (S[u] < X.size()) {
+				HashSet<Integer> c = new HashSet<>();
+				c.addAll(X);
+				c.add(v);
+				// System.out.println(c);
+				MaximalCliques.add(c);
+				ChromaticNumber = Math.max(ChromaticNumber, 1 + X.size());
+			}
+		}
+
+	}
+
+	private static int Min(HashSet<Integer> X) {
+		int i = Integer.MAX_VALUE;
+		for (Integer x : X) {
+			i = Math.min(i, O_1.get(x));
+		}
+		return i;
+	}
+
+	private static HashSet<Integer> get(int v, int N) {
+		HashSet<Integer> X = new HashSet<>();
+		for (int x = 1; x <= N; x++) {
+			if (adj[v].contains(x) && O_1.get(v) < O_1.get(x)) {
+				X.add(x);
+			}
+		}
+
+		return X;
+	}
+
+}
