@@ -1,0 +1,110 @@
+import java.awt.Point;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map.Entry;
+import java.util.Scanner;
+
+public class Transtive_Orientation {
+
+	static HashMap<Point, Integer> hm;
+	static HashSet<Integer> adj[];
+	static Point [] edges ;
+	static int K, n, m;
+	static boolean flag;
+	static Scanner in = new Scanner(System.in);
+
+	public static void main(String[] args) {
+		n = in.nextInt();
+		m = in.nextInt();
+		adj = new HashSet[n];
+		edges = new Point [m];
+		hm = new HashMap<>();
+		K = 0;
+		flag = false;
+		for (int i = 0; i < n; i++) {
+			adj[i] = new HashSet<>();
+		}
+		for (int i = 0; i < m; i++) {
+			int u = in.nextInt() - 1;
+			int v = in.nextInt() - 1;
+			adj[u].add(v);
+			adj[v].add(u);
+			edges[i] = new Point(u, v);
+		}
+		
+		for(Point e : edges){
+			if(Class(e.x, e.y) == Integer.MAX_VALUE){
+				K = K+1;
+				hm.put(e,K);
+				Point p = new Point(e.y, e.x);
+				hm.put(p,-K);
+				Explore(e.x,e.y);
+			}
+			
+		}
+		
+		System.out.println(flag ? "Not Comparability graph" : "Comparability graph :D");
+		if(! flag){
+			System.out.println("Transtive orientation of this graph");
+			print();
+		}
+		
+	}
+	static void print(){
+		for(Point p:hm.keySet()){
+			if(hm.get(p) > 0){
+				System.out.println((p.x+1)+" "+(p.y+1));
+			}
+		}
+	}
+	static void Explore (int i , int j){
+		for(Integer u : adj[i]){
+			if(! adj[j].contains(u) || (int)Math.abs(Class(j, u)) < K){
+				if(Class(i, u)==Integer.MAX_VALUE){
+					Point p = new Point(i, u);
+					Point p_ = new Point(u, i);
+					hm.put(p,K);
+					hm.put(p_,-K);
+					Explore(i,u);
+				}else{
+					if(Class(i, u) == -K){
+						Point p = new Point(i, u);
+						hm.put(p,K);
+						flag = true;
+						Explore(i,u);
+					}
+				}
+			}
+		}
+		
+		for(Integer u : adj[j]){
+			if(! adj[i].contains(u) || (int)Math.abs(Class(i, u)) < K){
+				if(Class(u,j)==Integer.MAX_VALUE){
+					Point p = new Point(u, j);
+					Point p_ = new Point(j, u);
+					hm.put(p,K);
+					hm.put(p_,-K);
+					Explore(u,j);
+				}else{
+					if(Class(u, j) == -K){
+						Point p = new Point(u, j);
+						hm.put(p,K);
+						flag = true;
+						Explore(u,j);
+					}
+				}
+			}
+		}
+	}
+	
+	
+	
+	static int Class (int i , int j){
+		Point e = new Point(i, j);
+		if(! hm.containsKey(e)){
+			return Integer.MAX_VALUE;
+		}
+		return hm.get(e);
+	}
+	
+}
